@@ -1,0 +1,12 @@
+{
+  "vault_path": "C:\\Users\\<you>\\Documents\\Obsidian Vault",
+  "daily_log_file": "DailyLog.md",
+  "transcript_root": "~/.claude/projects",
+  "project_dirs": [
+    "C:\\personal",
+    "D:\\AOT"
+  ],
+  "language": "en",
+  "date_format": "YYYY-MM-DD",
+  "hub_hint": "Prefer linking to project hub notes like [[ProjectName]] when a bullet relates to a specific project."
+}
