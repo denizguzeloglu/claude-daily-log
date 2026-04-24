@@ -15,5 +15,29 @@ if ! command -v claude >/dev/null 2>&1; then
   exit 1
 fi
 
+if ! command -v python3 >/dev/null 2>&1; then
+  echo "python3 not found on PATH (used to parse config.json)." >&2
+  exit 1
+fi
+
+# Parse config, expand ~, and emit each existing path on its own line
+mapfile -t ADD_DIRS < <(CONFIG="$CONFIG" python3 - <<'PY'
+import json, os, sys
+cfg = json.load(open(os.environ["CONFIG"]))
+paths = [cfg.get("vault_path"), cfg.get("transcript_root")] + list(cfg.get("project_dirs", []))
+for p in paths:
+    if not p:
+        continue
+    p = os.path.expanduser(p)
+    if os.path.exists(p):
+        print(p)
+PY
+)
+
+ADD_ARGS=()
+for d in "${ADD_DIRS[@]}"; do
+  ADD_ARGS+=(--add-dir "$d")
+done
+
 cd "$PROJECT_DIR"
-cat "$PROMPT" | claude --print
+cat "$PROMPT" | claude --print --permission-mode acceptEdits "${ADD_ARGS[@]}"
