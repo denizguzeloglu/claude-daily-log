@@ -18,9 +18,9 @@ You are running as a scheduled headless job. Your single responsibility is to ap
    - **Do NOT copy verbatim.** Distill across all sessions into themes.
 
 5. **Scan git activity.** Get the user's git email once: `git config --global user.email`. Then for each path in `project_dirs`:
-   - Recursively find `.git` directories up to depth 3.
-   - For each repo, run: `git log --since="today 00:00" --all --pretty=format:"%h %s" --author="<email>"`.
-   - Collect non-empty results keyed by repo name (basename of the repo dir).
+   - Use `Glob` with pattern `**/.git` (or recurse with `ls`) under each project dir to find repos, up to depth 3.
+   - For each repo path `R`, run: `git -C "R" log --since="today 00:00" --all --pretty=format:"%h %s" --author="<email>"`. Always use the `-C` form so you never need to `cd`.
+   - Collect non-empty results keyed by repo name (basename of `R`).
 
 6. **Discover hub notes.** List `.md` files at the root of `vault_path`. Their basenames (without `.md`) are candidate wikilink targets. Use `hub_hint` in config as a tiebreaker. Never invent a hub name that doesn't exist as a file.
 
@@ -52,3 +52,4 @@ You are running as a scheduled headless job. Your single responsibility is to ap
 - If `config.json` is missing, malformed, or `vault_path` / daily log file does not exist: print a clear error to stderr and exit non-zero. Do not attempt to create them.
 - Transcripts can be very large. Read line-by-line (JSONL), do not load whole files into memory when avoidable.
 - Keep the run under 5 minutes. If transcript volume is too large, prioritize the 3 most recently modified sessions.
+- **Do NOT create auxiliary script files** (`.py`, `.sh`, `.js`, etc.) to process data. You already have `Read`, `Glob`, `Grep` as first-class tools — use them directly. Writing a helper script and then being unable to delete it leaves trash in the project dir.
