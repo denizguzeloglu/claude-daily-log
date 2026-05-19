@@ -22,13 +22,13 @@ You are running as a scheduled headless job. Your single responsibility is to ap
    - For each repo path `R`, run: `git -C "R" log --since="today 00:00" --all --pretty=format:"%h %s" --author="<email>"`. Always use the `-C` form so you never need to `cd`.
    - Collect non-empty results keyed by repo name (basename of `R`).
 
-6. **Discover hub notes.** List `.md` files at the root of `vault_path`. Their basenames (without `.md`) are candidate wikilink targets. Use `hub_hint` in config as a tiebreaker.
+6. **Discover hub notes.** Recursively list `.md` files under `{vault_path}/20 Projects/` (the PARA-lite projects folder). Their basenames (without `.md`) are candidate wikilink targets. Use `hub_hint` in config as a tiebreaker. Wikilinks resolve by basename in Obsidian, so subfolder paths do not appear in the link text.
 
 7. **Detect new project hubs.** For each distinct project or named topic you identify in today's work (proper nouns only — named projects, products, initiatives; NOT generic activities like "debugging", "refactoring", "meetings"):
-   - If a hub file already exists at `{vault_path}/{Topic}.md`, use that wikilink in the entry as normal — skip this sub-step.
+   - If a hub file with basename `{Topic}.md` already exists anywhere under `{vault_path}/20 Projects/` (use the recursive scan from step 6), use that wikilink in the entry as normal — skip this sub-step.
    - If no hub file exists: scan the last 14 `## ...` date headings in the daily log file. Count how many distinct date headings contain this topic's name (case-insensitive, partial match on the bare name without brackets).
-   - If `prior_days >= 1` (so today + at least 1 prior day = 2+ distinct days), create a new hub stub at `{vault_path}/{Topic}.md` using the template below. Use the topic name exactly as you would in a wikilink (preserve user-facing casing, e.g. `Party Room.md`, not `party-room.md`).
-   - Never overwrite an existing file. If the target path already exists (even with different casing on case-insensitive filesystems), skip creation and just use the wikilink.
+   - If `prior_days >= 1` (so today + at least 1 prior day = 2+ distinct days), create a new hub stub at `{vault_path}/20 Projects/{Topic}/{Topic}.md` using the template below. Create the `{Topic}` subfolder if it does not exist. Use the topic name exactly as you would in a wikilink (preserve user-facing casing, e.g. `Party Room.md`, not `party-room.md`).
+   - Never overwrite an existing file. If a file with the same basename already exists anywhere under `20 Projects/` (even with different casing on case-insensitive filesystems), skip creation and just use the wikilink.
    - After creation, reference it with a wikilink in today's entry.
 
    **Hub stub template** (write verbatim, substituting `{Topic}` and `{today_iso}` — ISO date `YYYY-MM-DD` regardless of `config.date_format`):
@@ -73,7 +73,7 @@ You are running as a scheduled headless job. Your single responsibility is to ap
    - Bullet text in `config.language` (`tr` = Turkish, `en` = English).
    - Wikilinks only to hubs that exist. Skip the wikilink if no good match.
    - The commits line is singular: one bullet starting with `Commitler:` (tr) or `Commits:` (en), listing repo → commits. Omit entirely if no commits.
-   - If no transcripts AND no commits today: write a single bullet `- dinlendi` (tr) / `- day off` (en).
+   - If no transcripts AND no commits today: only write a single bullet `- dinlendi` (tr) / `- day off` (en) when the current local hour is `>= 17`. If it is earlier in the day, print `Too early to declare a day off (hour=<H>); skipping write — the evening run will log real work.` to stderr and exit `0` without touching the daily log. (Rationale: an early-hour catch-up run from a previously missed schedule must not pre-empt today's evening run by stamping a bogus `dinlendi` heading.)
 
 9. **Append.** Open the daily log file. Ensure it ends with a blank line. Append the composed entry, then a trailing newline.
 
